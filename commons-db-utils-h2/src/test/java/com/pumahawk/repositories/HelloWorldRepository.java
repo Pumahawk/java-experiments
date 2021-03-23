@@ -19,7 +19,7 @@ public class HelloWorldRepository {
 	
 	public HelloWorldDao getById(BigDecimal id) {
 		try {
-			return queryRunner.query("select * from HelloWorld where id = ?", new JacksonResultSetHandler<>(HelloWorldDao.class), id.intValue());
+			return queryRunner.query("select * from HelloWorld where id = ?", new JacksonResultSetHandler<>(HelloWorldDao.class), id);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
