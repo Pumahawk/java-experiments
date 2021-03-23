@@ -43,6 +43,7 @@ public class ConvertResultSetToClassWithJacksonTests {
 	
 	private Map<String, Object> resoultSetToMap(ResultSet resultSet) throws SQLException {
 		Map<String, Object> map = new HashMap<>();
+		
 		ResultSetMetaData md = resultSet.getMetaData();
 		int columnCounter = md.getColumnCount();
 		

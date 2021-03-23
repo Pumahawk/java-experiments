@@ -1,15 +1,17 @@
 package com.pumahawk;
 
+import java.math.BigDecimal;
+
 public class HelloWorldDao {
 
-	private int id;
+	private BigDecimal id;
 	private String message;
 
-	public int getId() {
+	public BigDecimal getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(BigDecimal id) {
 		this.id = id;
 	}
 
