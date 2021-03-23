@@ -21,22 +21,26 @@ public class JacksonResultSetHandler<T> implements ResultSetHandler<T> {
 
 	@Override
 	public T handle(ResultSet rs) throws SQLException {
+		ObjectMapper om = new ObjectMapper();
+		om.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+		return om.convertValue(convert(rs), type);
+	}
+	
+	private ObjectNode convert(ResultSet rs) throws SQLException {
+		
+		ObjectMapper mapper = new ObjectMapper();
+		ObjectNode node = mapper.createObjectNode();
 
 		ResultSetMetaData md = rs.getMetaData();
 		int columnCounter = md.getColumnCount();
 		
-		ObjectMapper mapper = new ObjectMapper();
-		
-		ObjectNode node = mapper.createObjectNode();
 		if (rs.next()) {
 			for (int i = 1; i <= columnCounter; i++) {
 				node.set(md.getColumnLabel(i), mapper.convertValue(rs.getObject(i), JsonNode.class));
 			}
 		}
-
-		ObjectMapper om = new ObjectMapper();
-		om.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
-		return om.convertValue(node, type);
+		
+		return node;
 	}
 
 }
