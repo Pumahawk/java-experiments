@@ -6,3 +6,4 @@ Collections of my personal expreriments with Java.
 - **mybatis-test**, H2, MyBatis, Spring Test.
 - **jackson-database-test**, H2, Jackson, JDBC.  
 	Convert *ResultSet* to *Object* using Jackson.
+- **commons-db-utils-h2**, H2, Jackson, Apache Commons DBUtils, Spring Test.
