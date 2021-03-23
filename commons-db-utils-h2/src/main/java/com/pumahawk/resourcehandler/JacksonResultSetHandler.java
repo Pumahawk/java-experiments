@@ -23,7 +23,8 @@ public class JacksonResultSetHandler<T> implements ResultSetHandler<T> {
 	public T handle(ResultSet rs) throws SQLException {
 		ObjectMapper om = new ObjectMapper();
 		om.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
-		return om.convertValue(convert(rs), type);
+		ObjectNode node = convert(rs);
+		return node != null ? om.convertValue(node, type) : null;
 	}
 	
 	private ObjectNode convert(ResultSet rs) throws SQLException {
@@ -38,9 +39,11 @@ public class JacksonResultSetHandler<T> implements ResultSetHandler<T> {
 			for (int i = 1; i <= columnCounter; i++) {
 				node.set(md.getColumnLabel(i), mapper.convertValue(rs.getObject(i), JsonNode.class));
 			}
+			return node;
+		} else {
+			return null;
 		}
 		
-		return node;
 	}
 
 }
