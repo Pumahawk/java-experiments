@@ -10,15 +10,11 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.pumahawk.repositories.HelloWorldRepository;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = IntegrationContextConfiguration.class)
+@IntegrationWihtH2Test
 public class GetResourceObjectTests {
 
 	@Autowired
