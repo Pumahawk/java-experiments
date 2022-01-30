@@ -1,63 +1,89 @@
 package com.pumahawk;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-
-import javax.sql.DataSource;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.test.annotation.Commit;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 @SpringBootTest
-@ComponentScan(basePackageClasses = App.class)
 public class DatabaseH2ConfigurationTests {
 
     @Autowired
-    private DataSource dataSource;
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private DataSourceTransactionManager transactionManager;
 
     @Test
     public void loadContext() throws SQLException { 
     }
 
     @Test
-    public void transactionalTest() throws SQLException {
+    public void initDatabaseH2() {
 
-        Connection c = dataSource.getConnection();
+        jdbcTemplate.update("INSERT INTO HELLO VALUES(?, ?)", 2, "Ciao Mondo");
 
-        DatabaseH2Configuration.initDatabaseH2(c);
+        String name = jdbcTemplate.queryForObject("SELECT NAME FROM HELLO WHERE ID = ?", String.class, 2);
+        assertEquals("Ciao Mondo", name);
 
-        c.close();
-
-        Connection c2 = DataSourceUtils.getConnection(dataSource);
-
-        assertTrue(DataSourceUtils.isConnectionTransactional(c2, dataSource));
-
-
-        c2.prepareStatement("INSERT INTO HELLO VALUES(2343, 'ciao') ").execute();
-
-        c2.commit();
-
-        // Connection c3 = DataSourceUtils.getConnection(dataSource);
-
-        // ResultSet r = c3.prepareStatement("SELECT * FROM HELLO where ID = 2343").executeQuery();
-        // assertTrue(r.next());
     }
 
     @Test
-    public void get2() throws SQLException {
-        Connection c = DataSourceUtils.getConnection(dataSource);
+    public void tryTransactionalRoolback() {
+        TransactionStatus transaction = transactionManager.getTransaction(new DefaultTransactionDefinition());
+        
+        jdbcTemplate.update("INSERT INTO HELLO VALUES(?, ?)", 3, "Ciao Mondo");
 
-        ResultSet r = c.prepareStatement("SELECT * FROM HELLO where ID = 2343").executeQuery();
-        assertTrue(r.next());
+        transactionManager.rollback(transaction);
+
+        assertThrows(EmptyResultDataAccessException.class, () -> jdbcTemplate.queryForObject("SELECT NAME FROM HELLO WHERE ID = ?", String.class, 3));
+
+    }
+
+    @Test
+    public void transactionMultiThread() throws InterruptedException, ExecutionException {
+        CompletableFuture<Void> c1 = CompletableFuture.runAsync(() -> {
+            TransactionStatus transaction = transactionManager.getTransaction(new DefaultTransactionDefinition());
+            jdbcTemplate.update("INSERT INTO HELLO VALUES(?, ?)", 4, "Ciao Mondo");
+            try {
+                Thread.sleep(200L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            transactionManager.commit(transaction);
+        });
+        CompletableFuture.runAsync(() -> {
+            TransactionStatus transaction = transactionManager.getTransaction(new DefaultTransactionDefinition());
+            try {
+                Thread.sleep(100L);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            transactionManager.rollback(transaction);
+        });
+        c1.get();
+        String name = jdbcTemplate.queryForObject("SELECT NAME FROM HELLO WHERE ID = ?", String.class, 4);
+        assertEquals("Ciao Mondo", name);
+    }
+
+    @Configuration
+    @Import({
+        DatabaseH2Configuration.class
+    })
+    public static class Conf {
     }
 
 }
