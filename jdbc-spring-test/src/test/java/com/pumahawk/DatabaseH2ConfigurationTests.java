@@ -81,7 +81,7 @@ public class DatabaseH2ConfigurationTests {
 
     @Configuration
     @Import({
-        DatabaseH2Configuration.class
+        DatabaseH2Configuration.class,
     })
     public static class Conf {
     }
